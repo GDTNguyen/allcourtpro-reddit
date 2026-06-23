@@ -5,6 +5,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useRecentlyAdded } from './hooks/useRecentlyAdded';
 import { DataSourceNotice } from './components/data-source-notice';
+import { DraftPostButton } from './components/draft-post-button';
+import { LiveStatusBar } from './components/live-status-bar';
 import type { RecentlyAddedResult } from '../shared/api';
 
 function formatPlayedAt(result: RecentlyAddedResult): string {
@@ -26,9 +28,19 @@ function ComparisonPreview({ markdown }: { markdown: string }) {
   );
 }
 
-function MatchCard({ result }: { result: RecentlyAddedResult }) {
+function MatchCard({
+  result,
+  isNew,
+}: {
+  result: RecentlyAddedResult;
+  isNew: boolean;
+}) {
   return (
-    <article className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <article
+      className={`rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 ${
+        isNew ? 'match-row-new' : ''
+      }`}
+    >
       <p className="text-base leading-snug font-medium text-gray-900 dark:text-gray-100">
         {result.line}
       </p>
@@ -42,12 +54,22 @@ function MatchCard({ result }: { result: RecentlyAddedResult }) {
           No charting comparison available for this match.
         </p>
       )}
+      <DraftPostButton result={result} />
     </article>
   );
 }
 
 export const App = () => {
-  const { data, loading, error, refresh } = useRecentlyAdded(20);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refresh,
+    lastUpdatedAt,
+    secondsUntilRefresh,
+    newEventKeys,
+  } = useRecentlyAdded(20);
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6 dark:bg-gray-900">
@@ -64,13 +86,20 @@ export const App = () => {
           type="button"
           className="rounded-full border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-white disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
           onClick={() => void refresh()}
-          disabled={loading}
+          disabled={loading || refreshing}
         >
-          {loading ? 'Loading…' : 'Refresh'}
+          {loading || refreshing ? 'Updating…' : 'Refresh now'}
         </button>
       </header>
 
       <main className="mx-auto flex max-w-2xl flex-col gap-3">
+        <LiveStatusBar
+          lastUpdatedAt={lastUpdatedAt}
+          secondsUntilRefresh={secondsUntilRefresh}
+          refreshing={refreshing}
+          source={data?.source ?? 'live'}
+        />
+
         {data ? <DataSourceNotice data={data} /> : null}
 
         {loading && !data ? (
@@ -85,9 +114,17 @@ export const App = () => {
           </p>
         ) : null}
 
-        {data?.results.map((result) => (
-          <MatchCard key={result.eventKey} result={result} />
-        ))}
+        {data?.results.length ? (
+          <div className={refreshing ? 'live-list-updating flex flex-col gap-3' : 'flex flex-col gap-3'}>
+            {data.results.map((result) => (
+              <MatchCard
+                key={result.eventKey}
+                result={result}
+                isNew={newEventKeys.has(result.eventKey)}
+              />
+            ))}
+          </div>
+        ) : null}
 
         {!loading && !error && data && data.results.length === 0 ? (
           <p className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">

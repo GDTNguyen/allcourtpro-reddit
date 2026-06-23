@@ -39,6 +39,12 @@ export type RecentlyAddedResponse = {
   results: RecentlyAddedResult[];
 };
 
+export type CreatePostFromResultResponse = {
+  type: 'post-created';
+  postId: string;
+  eventKey: string;
+};
+
 export type ApiErrorResponse = {
   status: 'error';
   message: string;

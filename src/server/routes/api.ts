@@ -1,12 +1,16 @@
 import { Hono } from 'hono';
 import { context, redis, reddit } from '@devvit/web/server';
 import { loadAllCourtRecentlyAdded } from '../allcourt-recently-added';
+import { submitMatchPost } from '../core/match-post';
 import type {
   ApiErrorResponse,
+  CreatePostFromResultResponse,
   DecrementResponse,
   IncrementResponse,
   InitResponse,
 } from '../../shared/api';
+
+const REDIS_POSTED_PREFIX = 'tennis:posted:';
 
 type ErrorResponse = ApiErrorResponse;
 
@@ -108,6 +112,62 @@ api.get('/recently-added', async (c) => {
     console.error('[api/recently-added]', error);
     const message =
       error instanceof Error ? error.message : 'Failed to load recent matches';
+    return c.json<ErrorResponse>({ status: 'error', message }, 502);
+  }
+});
+
+api.post('/posts/from-result', async (c) => {
+  const { subredditName } = context;
+
+  if (!subredditName) {
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'subredditName is required but missing from context' },
+      400
+    );
+  }
+
+  let body: { eventKey?: string; title?: string; text?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json<ErrorResponse>({ status: 'error', message: 'Invalid JSON body' }, 400);
+  }
+
+  const eventKey = body.eventKey?.trim();
+  const title = body.title?.trim();
+  const text = typeof body.text === 'string' ? body.text : '';
+
+  if (!eventKey || !title) {
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'eventKey and title are required' },
+      400
+    );
+  }
+
+  const existing = await redis.get(`${REDIS_POSTED_PREFIX}${eventKey}`);
+  if (existing != null) {
+    return c.json<ErrorResponse>(
+      { status: 'error', message: 'A post for this match was already created' },
+      409
+    );
+  }
+
+  try {
+    const post = await submitMatchPost({
+      subredditName,
+      title,
+      text,
+      runAs: 'USER',
+    });
+    await redis.set(`${REDIS_POSTED_PREFIX}${eventKey}`, post.id);
+    return c.json<CreatePostFromResultResponse>({
+      type: 'post-created',
+      postId: post.id,
+      eventKey,
+    });
+  } catch (error) {
+    console.error('[api/posts/from-result]', error);
+    const message = error instanceof Error ? error.message : 'Failed to create post';
     return c.json<ErrorResponse>({ status: 'error', message }, 502);
   }
 });

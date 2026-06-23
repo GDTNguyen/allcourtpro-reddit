@@ -5,6 +5,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useRecentlyAdded } from './hooks/useRecentlyAdded';
 import { DataSourceNotice } from './components/data-source-notice';
+import { DraftPostButton } from './components/draft-post-button';
+import { LiveStatusBar } from './components/live-status-bar';
 import type { RecentlyAddedResult } from '../shared/api';
 
 function formatPlayedAt(result: RecentlyAddedResult): string {
@@ -12,9 +14,19 @@ function formatPlayedAt(result: RecentlyAddedResult): string {
   return result.date;
 }
 
-function MatchRow({ result }: { result: RecentlyAddedResult }) {
+function MatchRow({
+  result,
+  isNew,
+}: {
+  result: RecentlyAddedResult;
+  isNew: boolean;
+}) {
   return (
-    <li className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 dark:border-gray-700 dark:bg-gray-800/80">
+    <li
+      className={`rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 dark:border-gray-700 dark:bg-gray-800/80 ${
+        isNew ? 'match-row-new' : ''
+      }`}
+    >
       <p className="text-sm leading-snug text-gray-900 dark:text-gray-100">
         {result.line}
       </p>
@@ -25,13 +37,23 @@ function MatchRow({ result }: { result: RecentlyAddedResult }) {
             Charting stats
           </span>
         ) : null}
+        <DraftPostButton result={result} compact />
       </div>
     </li>
   );
 }
 
 export const Splash = () => {
-  const { data, loading, error, refresh } = useRecentlyAdded(10);
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    refresh,
+    lastUpdatedAt,
+    secondsUntilRefresh,
+    newEventKeys,
+  } = useRecentlyAdded(10);
 
   return (
     <div className="flex min-h-screen flex-col bg-white px-4 py-5 dark:bg-gray-900">
@@ -56,11 +78,18 @@ export const Splash = () => {
           type="button"
           className="shrink-0 rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
           onClick={() => void refresh()}
-          disabled={loading}
+          disabled={loading || refreshing}
         >
-          {loading ? 'Loading…' : 'Refresh'}
+          {loading || refreshing ? 'Updating…' : 'Refresh now'}
         </button>
       </header>
+
+      <LiveStatusBar
+        lastUpdatedAt={lastUpdatedAt}
+        secondsUntilRefresh={secondsUntilRefresh}
+        refreshing={refreshing}
+        source={data?.source ?? 'live'}
+      />
 
       {data ? <DataSourceNotice data={data} /> : null}
 
@@ -83,9 +112,13 @@ export const Splash = () => {
       ) : null}
 
       {data && data.results.length > 0 ? (
-        <ul className="flex flex-col gap-2">
+        <ul className={`flex flex-col gap-2 ${refreshing ? 'live-list-updating' : ''}`}>
           {data.results.map((result) => (
-            <MatchRow key={result.eventKey} result={result} />
+            <MatchRow
+              key={result.eventKey}
+              result={result}
+              isNew={newEventKeys.has(result.eventKey)}
+            />
           ))}
         </ul>
       ) : null}
