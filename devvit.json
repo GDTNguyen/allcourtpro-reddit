@@ -41,6 +41,14 @@
   "triggers": {
     "onAppInstall": "/internal/triggers/on-app-install"
   },
+  "scheduler": {
+    "tasks": {
+      "sync-recent-matches": {
+        "endpoint": "/internal/scheduler/sync-recent-matches",
+        "cron": "*/1 * * * *"
+      }
+    }
+  },
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build"
@@ -52,6 +60,7 @@
     "http": {
       "enable": true,
       "domains": ["www.allcourt.pro", "allcourt.pro"]
-    }
+    },
+    "redis": true
   }
 }
