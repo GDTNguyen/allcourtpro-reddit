@@ -9,6 +9,10 @@ A starter to build web applications on Reddit's developer platform
 - [Tailwind](https://tailwindcss.com/): For styles
 - [TypeScript](https://www.typescriptlang.org/): For type safety
 
+## Domain access (allcourt.pro)
+
+This app’s server fetches live ATP/WTA match results from AllCourt Pro’s public API at `https://www.allcourt.pro/api/tennis-results/recently-added` (match lines, timestamps, and optional charting stats). Reddit Devvit blocks outbound HTTP to domains that are not on your app’s allowlist, so `allcourt.pro` and `www.allcourt.pro` are listed under **Domain exceptions** in `devvit.json`. Until Reddit approves that domain in Developer Settings (currently **Pending**), those requests fail and the app shows sample data instead; once approved, the same endpoints serve real recently-added matches with no code changes.
+
 ## Getting Started
 
 > Make sure you have Node 22 downloaded on your machine before running!
