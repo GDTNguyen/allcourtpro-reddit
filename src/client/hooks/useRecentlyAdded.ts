@@ -2,13 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RecentlyAddedResponse } from '../../shared/api';
 
 export const REFRESH_INTERVAL_SECONDS = 60;
+export const MAX_RECENTLY_ADDED_LIMIT = 50;
+export const LOAD_MORE_PAGE_SIZE = 10;
 
 type RecentlyAddedState = {
   loading: boolean;
   refreshing: boolean;
+  loadingMore: boolean;
   error: string | null;
   data: RecentlyAddedResponse | null;
 };
+
+type FetchMode = 'initial' | 'refresh' | 'loadMore';
 
 function isRecentlyAddedResponse(value: unknown): value is RecentlyAddedResponse {
   if (typeof value !== 'object' || value === null) return false;
@@ -49,10 +54,15 @@ async function fetchRecentlyAdded(limit: number): Promise<RecentlyAddedResponse>
   throw new Error('Unexpected response');
 }
 
-export const useRecentlyAdded = (limit = 10) => {
+export const useRecentlyAdded = (
+  initialLimit = 10,
+  pageSize = LOAD_MORE_PAGE_SIZE
+) => {
+  const [limit, setLimit] = useState(initialLimit);
   const [state, setState] = useState<RecentlyAddedState>({
     loading: true,
     refreshing: false,
+    loadingMore: false,
     error: null,
     data: null,
   });
@@ -65,24 +75,30 @@ export const useRecentlyAdded = (limit = 10) => {
   const hasLoadedRef = useRef(false);
   const autoRefreshPendingRef = useRef(false);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchModeRef = useRef<FetchMode>('initial');
 
   useEffect(() => {
     let cancelled = false;
+    const mode = fetchModeRef.current;
 
     const load = async () => {
-      setState((prev) => ({
-        ...prev,
-        loading: prev.data === null,
-        refreshing: prev.data !== null,
-        error: null,
-      }));
+      if (mode === 'loadMore') {
+        setState((prev) => ({ ...prev, loadingMore: true, error: null }));
+      } else {
+        setState((prev) => ({
+          ...prev,
+          loading: prev.data === null,
+          refreshing: prev.data !== null,
+          error: null,
+        }));
+      }
 
       try {
         const data = await fetchRecentlyAdded(limit);
         if (cancelled) return;
 
         const incomingKeys = new Set(data.results.map((result) => result.eventKey));
-        if (hasLoadedRef.current) {
+        if (hasLoadedRef.current && mode !== 'loadMore') {
           const added = new Set(
             [...incomingKeys].filter((key) => !previousKeysRef.current.has(key))
           );
@@ -102,16 +118,25 @@ export const useRecentlyAdded = (limit = 10) => {
         autoRefreshPendingRef.current = false;
         setLastUpdatedAt(Date.now());
         setSecondsUntilRefresh(REFRESH_INTERVAL_SECONDS);
-        setState({ loading: false, refreshing: false, error: null, data });
+        setState({
+          loading: false,
+          refreshing: false,
+          loadingMore: false,
+          error: null,
+          data,
+        });
       } catch (err) {
         if (cancelled) return;
         autoRefreshPendingRef.current = false;
         setState((prev) => ({
           loading: false,
           refreshing: false,
+          loadingMore: false,
           error: err instanceof Error ? err.message : 'Failed to load matches',
           data: prev.data,
         }));
+      } finally {
+        fetchModeRef.current = 'initial';
       }
     };
 
@@ -134,9 +159,11 @@ export const useRecentlyAdded = (limit = 10) => {
         remaining === 0 &&
         !autoRefreshPendingRef.current &&
         !state.loading &&
-        !state.refreshing
+        !state.refreshing &&
+        !state.loadingMore
       ) {
         autoRefreshPendingRef.current = true;
+        fetchModeRef.current = 'refresh';
         setReloadToken((token) => token + 1);
       }
     };
@@ -144,7 +171,7 @@ export const useRecentlyAdded = (limit = 10) => {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [lastUpdatedAt, state.loading, state.refreshing]);
+  }, [lastUpdatedAt, state.loading, state.refreshing, state.loadingMore]);
 
   useEffect(() => {
     return () => {
@@ -156,12 +183,28 @@ export const useRecentlyAdded = (limit = 10) => {
 
   const refresh = useCallback(() => {
     autoRefreshPendingRef.current = false;
+    fetchModeRef.current = 'refresh';
     setReloadToken((token) => token + 1);
   }, []);
+
+  const loadMore = useCallback(() => {
+    fetchModeRef.current = 'loadMore';
+    setLimit((current) => {
+      if (current >= MAX_RECENTLY_ADDED_LIMIT) return current;
+      return Math.min(current + pageSize, MAX_RECENTLY_ADDED_LIMIT);
+    });
+  }, [pageSize]);
+
+  const hasMore =
+    state.data !== null &&
+    state.data.results.length >= limit &&
+    limit < MAX_RECENTLY_ADDED_LIMIT;
 
   return {
     ...state,
     refresh,
+    loadMore,
+    hasMore,
     lastUpdatedAt,
     secondsUntilRefresh,
     newEventKeys,

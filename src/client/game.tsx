@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 import { useRecentlyAdded } from './hooks/useRecentlyAdded';
 import { DataSourceNotice } from './components/data-source-notice';
 import { DraftPostButton } from './components/draft-post-button';
+import { LoadMoreButton } from './components/load-more-button';
 import { LiveStatusBar } from './components/live-status-bar';
 import type { RecentlyAddedResult } from '../shared/api';
 
@@ -64,8 +65,11 @@ export const App = () => {
     data,
     loading,
     refreshing,
+    loadingMore,
     error,
     refresh,
+    loadMore,
+    hasMore,
     lastUpdatedAt,
     secondsUntilRefresh,
     newEventKeys,
@@ -123,6 +127,16 @@ export const App = () => {
                 isNew={newEventKeys.has(result.eventKey)}
               />
             ))}
+          </div>
+        ) : null}
+
+        {hasMore ? (
+          <div className="flex justify-center pt-1">
+            <LoadMoreButton
+              onClick={loadMore}
+              loading={loadingMore}
+              disabled={loading || refreshing}
+            />
           </div>
         ) : null}
 

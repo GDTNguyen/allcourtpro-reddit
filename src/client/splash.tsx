@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 import { useRecentlyAdded } from './hooks/useRecentlyAdded';
 import { DataSourceNotice } from './components/data-source-notice';
 import { DraftPostButton } from './components/draft-post-button';
+import { LoadMoreButton } from './components/load-more-button';
 import { LiveStatusBar } from './components/live-status-bar';
 import type { RecentlyAddedResult } from '../shared/api';
 
@@ -48,8 +49,11 @@ export const Splash = () => {
     data,
     loading,
     refreshing,
+    loadingMore,
     error,
     refresh,
+    loadMore,
+    hasMore,
     lastUpdatedAt,
     secondsUntilRefresh,
     newEventKeys,
@@ -121,6 +125,16 @@ export const Splash = () => {
             />
           ))}
         </ul>
+      ) : null}
+
+      {hasMore ? (
+        <div className="mt-4 flex justify-center">
+          <LoadMoreButton
+            onClick={loadMore}
+            loading={loadingMore}
+            disabled={loading || refreshing}
+          />
+        </div>
       ) : null}
 
       <div className="mt-5 flex items-center justify-center">
