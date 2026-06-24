@@ -163,6 +163,22 @@ export const Splash = () => {
         >
           r/ATPWTA
         </button>
+        <span className="text-gray-300 dark:text-gray-600">|</span>
+        <button
+          type="button"
+          className="cursor-pointer transition-colors hover:text-gray-900 dark:hover:text-white"
+          onClick={() => navigateTo('https://www.allcourt.pro/terms')}
+        >
+          Terms
+        </button>
+        <span className="text-gray-300 dark:text-gray-600">|</span>
+        <button
+          type="button"
+          className="cursor-pointer transition-colors hover:text-gray-900 dark:hover:text-white"
+          onClick={() => navigateTo('https://www.allcourt.pro/privacy')}
+        >
+          Privacy
+        </button>
       </footer>
     </div>
   );
