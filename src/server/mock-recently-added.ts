@@ -114,7 +114,7 @@ export function mockRecentlyAddedResponse(limit: number): RecentlyAddedResponse 
     type: 'recently-added',
     source: 'mock',
     notice:
-      'Sample data — Reddit has not approved www.allcourt.pro for HTTP fetch yet. Check Developer Settings after playtest/upload.',
+      'Sample data — Reddit has not approved amspslqidldfolaborfi.supabase.co for HTTP fetch yet. Check Developer Settings after playtest/upload.',
     queriedAt: now,
     newMatchMaxAgeMinutes: 10,
     cutoffAt: null,

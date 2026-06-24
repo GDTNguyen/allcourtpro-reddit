@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { context, redis, reddit } from '@devvit/web/server';
-import { loadAllCourtRecentlyAdded } from '../allcourt-recently-added';
+import { loadRecentlyAddedFromSupabase } from '../supabase-recently-added';
 import { submitMatchPost } from '../core/match-post';
 import type {
   ApiErrorResponse,
@@ -106,7 +106,7 @@ api.get('/recently-added', async (c) => {
   const ignoreMaxAge = c.req.query('ignoreMaxAge') === '1';
 
   try {
-    const payload = await loadAllCourtRecentlyAdded(limit, ignoreMaxAge);
+    const payload = await loadRecentlyAddedFromSupabase(limit, ignoreMaxAge);
     return c.json(payload);
   } catch (error) {
     console.error('[api/recently-added]', error);

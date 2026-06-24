@@ -15,17 +15,20 @@ This app’s server fetches live ATP/WTA match results from AllCourt Pro’s Sup
 
 Reddit Devvit blocks outbound HTTP to domains that are not on your app’s allowlist. `supabase.com` is an approved limited-scope cloud provider, so **`amspslqidldfolaborfi.supabase.co`** is listed under **Domain exceptions** in `devvit.json` (request the most granular subdomain in Developer Settings). Until Reddit approves that host, fetches fail and the app shows sample data instead.
 
+Domain exceptions come from `devvit.json` → `permissions.http.domains`. Run `npm run deploy` after editing that list so the Supabase host appears in Developer Settings; it will not show until a deploy picks up the change.
+
 ### Devvit settings
 
 This app does **not** use `allcourt-partner-pins-secret`. That setting belongs to **find10spartner** — it stores the Bearer token for syncing partner pins to `https://www.allcourt.pro/api/reddit/partner-pins` and must match `REDDIT_PARTNER_PINS_API_SECRET` in the AllCourt Pro `.env`.
 
-For tennis results here, set the Supabase anon key once the server reads from Supabase (local dev can use `.env` instead):
+For tennis results here, set the Supabase service role key once (local dev can use `.env` with `SUPABASE_SERVICE_ROLE_KEY` instead). It must be declared in `devvit.json` → `settings.global` and deployed before the CLI can set it:
 
 ```bash
-npx devvit settings set supabase-anon-key
+npm run deploy
+npx devvit settings set supabase-service-role-key
 ```
 
-Use the same value as `NEXT_PUBLIC_SUPABASE_ANON_KEY` from the AllCourt Pro project. The Supabase URL is fixed in code / `devvit.json`; only the key is secret.
+Use the same value as `SUPABASE_SERVICE_ROLE_KEY` from the AllCourt Pro project. The Supabase URL is fixed in code / `devvit.json`; only the key is secret. `tennis_results_matches` has RLS enabled with no anon policy, so the service role key (which bypasses RLS) is used for these read-only fetches. Without it, the app shows sample data.
 
 ## Getting Started
 
@@ -47,7 +50,7 @@ Use the same value as `NEXT_PUBLIC_SUPABASE_ANON_KEY` from the AllCourt Pro proj
 
 ## Test Supabase data (PostgREST)
 
-Replace `YOUR_ANON_KEY` with `NEXT_PUBLIC_SUPABASE_ANON_KEY` from AllCourt Pro.
+Replace `YOUR_ANON_KEY` with `SUPABASE_SERVICE_ROLE_KEY` from AllCourt Pro.
 
 ```bash
 # Recently added (default ~10 min window — set first_seen_at cutoff to now minus 10m)
@@ -66,4 +69,17 @@ AllCourt Pro local API (same data, includes charting markdown enrichment):
 ```bash
 curl -s "http://localhost:3000/api/tennis-results/recently-added?limit=1&ignoreMaxAge=1" | jq
 curl -s "http://localhost:3000/api/tennis-results/recently-added" | jq
+```
+
+Local script (mirrors `src/server/supabase-recently-added.ts`):
+
+```bash
+# Default: recently added within the 10-minute window
+npm run test:supabase -- --env-file ../allcourtpro/.env.local
+
+# Fetch more rows
+npm run test:supabase -- --env-file ../allcourtpro/.env.local --limit 5
+
+# No first_seen_at cutoff (useful when the table has no very recent rows)
+npm run test:supabase -- --env-file ../allcourtpro/.env.local --ignore-max-age
 ```

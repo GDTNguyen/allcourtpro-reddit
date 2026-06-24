@@ -29,7 +29,7 @@ export type RecentlyAddedResult = {
 
 export type RecentlyAddedResponse = {
   type: 'recently-added';
-  /** live = fetched from allcourt.pro; mock = sample data while domain approval is pending */
+  /** live = fetched from Supabase; mock = sample data while domain approval is pending */
   source: 'live' | 'mock';
   notice?: string | null;
   queriedAt: string;

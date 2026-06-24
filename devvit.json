@@ -48,10 +48,20 @@
   "dev": {
     "subreddit": "allcourtpro_redd_dev"
   },
+  "settings": {
+    "global": {
+      "supabase-service-role-key": {
+        "type": "string",
+        "label": "Supabase service role key",
+        "helpText": "Service role key for reading tennis_results_matches from amspslqidldfolaborfi.supabase.co. Must match SUPABASE_SERVICE_ROLE_KEY in AllCourt Pro.",
+        "isSecret": true
+      }
+    }
+  },
   "permissions": {
     "http": {
       "enable": true,
-      "domains": ["www.allcourt.pro", "allcourt.pro"]
+      "domains": ["amspslqidldfolaborfi.supabase.co"]
     },
     "redis": true,
     "reddit": {
