@@ -69,6 +69,7 @@ AllCourt Pro local API (same data, includes charting markdown enrichment):
 ```bash
 curl -s "http://localhost:3000/api/tennis-results/recently-added?limit=1&ignoreMaxAge=1" | jq
 curl -s "http://localhost:3000/api/tennis-results/recently-added" | jq
+/Users/johnngu/Documents/allcourtpro/app/api/reddit/partner-pins/route.ts
 ```
 
 Local script (mirrors `src/server/supabase-recently-added.ts`):
