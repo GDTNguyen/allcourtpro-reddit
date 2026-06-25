@@ -36,6 +36,8 @@ export type RecentlyAddedResponse = {
   newMatchMaxAgeMinutes: number;
   cutoffAt: string | null;
   ageFilterApplied: boolean;
+  offset: number;
+  hasMore: boolean;
   results: RecentlyAddedResult[];
 };
 

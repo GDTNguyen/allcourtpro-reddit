@@ -43,10 +43,11 @@ type MatchRow = {
 
 export async function loadRecentlyAddedFromSupabase(
   limit: number,
+  offset: number,
   ignoreMaxAge: boolean,
 ): Promise<RecentlyAddedResponse> {
   if (useMockOnly()) {
-    return mockRecentlyAddedResponse(limit);
+    return mockRecentlyAddedResponse(limit, offset);
   }
 
   const key = await supabaseServiceRoleKey();
@@ -57,7 +58,7 @@ export async function loadRecentlyAddedFromSupabase(
 
   if (!key) {
     console.warn('[supabase] Service role key not set — returning mock recently-added data');
-    const mock = mockRecentlyAddedResponse(limit);
+    const mock = mockRecentlyAddedResponse(limit, offset);
     return { ...mock, notice: MISSING_KEY_NOTICE };
   }
 
@@ -65,6 +66,7 @@ export async function loadRecentlyAddedFromSupabase(
     select: 'event_key,line,match_date,match_time,first_seen_at',
     order: 'first_seen_at.desc',
     limit: String(limit),
+    offset: String(offset),
   });
   if (cutoffAt) {
     params.append('first_seen_at', `gte.${cutoffAt}`);
@@ -107,12 +109,14 @@ export async function loadRecentlyAddedFromSupabase(
       newMatchMaxAgeMinutes: NEW_MATCH_MAX_AGE_MINUTES,
       cutoffAt,
       ageFilterApplied: !ignoreMaxAge,
+      offset,
+      hasMore: results.length === limit,
       results,
     };
   } catch (error) {
     if (isDomainNotAllowedError(error)) {
       console.warn('[supabase] HTTP fetch blocked — returning mock recently-added data');
-      const mock = mockRecentlyAddedResponse(limit);
+      const mock = mockRecentlyAddedResponse(limit, offset);
       return { ...mock, notice: DOMAIN_PENDING_NOTICE };
     }
     throw error;

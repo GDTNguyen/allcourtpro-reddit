@@ -20,6 +20,12 @@ function parseLimit(raw: string | undefined): number {
   return Math.min(n, 50);
 }
 
+function parseOffset(raw: string | undefined): number {
+  const n = Number.parseInt(raw ?? '', 10);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return n;
+}
+
 export const api = new Hono();
 
 api.get('/init', async (c) => {
@@ -103,10 +109,11 @@ api.post('/decrement', async (c) => {
 
 api.get('/recently-added', async (c) => {
   const limit = parseLimit(c.req.query('limit'));
+  const offset = parseOffset(c.req.query('offset'));
   const ignoreMaxAge = c.req.query('ignoreMaxAge') === '1';
 
   try {
-    const payload = await loadRecentlyAddedFromSupabase(limit, ignoreMaxAge);
+    const payload = await loadRecentlyAddedFromSupabase(limit, offset, ignoreMaxAge);
     return c.json(payload);
   } catch (error) {
     console.error('[api/recently-added]', error);

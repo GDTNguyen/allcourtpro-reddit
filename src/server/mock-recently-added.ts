@@ -89,26 +89,31 @@ const MOCK_MATCH_TEMPLATES: MockMatchTemplate[] = [
   },
 ];
 
-function buildMockResults(limit: number, now: string): RecentlyAddedResult[] {
+function buildMockResults(limit: number, offset: number, now: string): RecentlyAddedResult[] {
   const results: RecentlyAddedResult[] = [];
 
   for (let i = 0; i < limit; i++) {
-    const template = MOCK_MATCH_TEMPLATES[i % MOCK_MATCH_TEMPLATES.length]!;
-    const hoursAgo = Math.floor(i / MOCK_MATCH_TEMPLATES.length);
-    const detectedAt = new Date(Date.now() - hoursAgo * 3_600_000 - i * 120_000).toISOString();
+    const index = offset + i;
+    const template = MOCK_MATCH_TEMPLATES[index % MOCK_MATCH_TEMPLATES.length]!;
+    const hoursAgo = Math.floor(index / MOCK_MATCH_TEMPLATES.length);
+    const detectedAt = new Date(Date.now() - hoursAgo * 3_600_000 - index * 120_000).toISOString();
 
     results.push({
       ...template,
-      eventKey: `mock-${12138000 + i}`,
-      detectedAt: i < 5 ? (i === 2 || i >= 3 ? now : detectedAt) : detectedAt,
+      eventKey: `mock-${12138000 + index}`,
+      detectedAt: index < 5 ? (index === 2 || index >= 3 ? now : detectedAt) : detectedAt,
     });
   }
 
   return results;
 }
 
-export function mockRecentlyAddedResponse(limit: number): RecentlyAddedResponse {
+export function mockRecentlyAddedResponse(
+  limit: number,
+  offset = 0,
+): RecentlyAddedResponse {
   const now = new Date().toISOString();
+  const results = buildMockResults(limit, offset, now);
 
   return {
     type: 'recently-added',
@@ -119,6 +124,8 @@ export function mockRecentlyAddedResponse(limit: number): RecentlyAddedResponse 
     newMatchMaxAgeMinutes: 10,
     cutoffAt: null,
     ageFilterApplied: false,
-    results: buildMockResults(limit, now),
+    offset,
+    hasMore: results.length === limit,
+    results,
   };
 }
