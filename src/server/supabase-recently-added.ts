@@ -1,14 +1,14 @@
 import { settings } from '@devvit/web/server';
 import type { RecentlyAddedResponse, RecentlyAddedResult } from '../shared/api';
+import { enrichMatchWithComparison } from './enrich-recently-added';
 import { mockRecentlyAddedResponse } from './mock-recently-added';
+import { SUPABASE_REST_BASE } from './supabase-config';
 
-const SUPABASE_HOST = 'amspslqidldfolaborfi.supabase.co';
-const SUPABASE_REST_BASE = `https://${SUPABASE_HOST}/rest/v1`;
 const MATCHES_TABLE = 'tennis_results_matches';
 const SERVICE_ROLE_KEY_SETTING = 'supabase-service-role-key';
 const NEW_MATCH_MAX_AGE_MINUTES = 10;
 
-const DOMAIN_PENDING_NOTICE = `${SUPABASE_HOST} is listed in devvit.json but pending Reddit approval. Using sample data until Developer Settings shows the domain as approved.`;
+const DOMAIN_PENDING_NOTICE = `amspslqidldfolaborfi.supabase.co is listed in devvit.json but pending Reddit approval. Using sample data until Developer Settings shows the domain as approved.`;
 const MISSING_KEY_NOTICE =
   'Supabase service role key not set (run: devvit settings set supabase-service-role-key). Using sample data.';
 
@@ -43,7 +43,7 @@ type MatchRow = {
 
 export async function loadRecentlyAddedFromSupabase(
   limit: number,
-  ignoreMaxAge: boolean
+  ignoreMaxAge: boolean,
 ): Promise<RecentlyAddedResponse> {
   if (useMockOnly()) {
     return mockRecentlyAddedResponse(limit);
@@ -87,17 +87,17 @@ export async function loadRecentlyAddedFromSupabase(
     }
 
     const rows = (await res.json()) as MatchRow[];
-    const results: RecentlyAddedResult[] = (rows ?? []).map((m) => ({
-      eventKey: m.event_key,
-      line: m.line,
-      date: m.match_date,
-      time: m.match_time ?? null,
-      detectedAt: m.first_seen_at,
-      // Charting H2H markdown is computed server-side in AllCourt Pro and is not
-      // stored in tennis_results_matches, so direct Supabase reads have none.
-      comparisonAvailable: false,
-      comparisonMarkdown: null,
+    const baseResults = (rows ?? []).map((match) => ({
+      eventKey: match.event_key,
+      line: match.line,
+      date: match.match_date,
+      time: match.match_time ?? null,
+      detectedAt: match.first_seen_at,
     }));
+
+    const results: RecentlyAddedResult[] = await Promise.all(
+      baseResults.map((match) => enrichMatchWithComparison(match, key)),
+    );
 
     return {
       type: 'recently-added',

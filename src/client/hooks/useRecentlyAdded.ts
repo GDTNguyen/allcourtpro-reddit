@@ -33,9 +33,11 @@ function errorMessageFromPayload(value: unknown): string | null {
 }
 
 async function fetchRecentlyAdded(limit: number): Promise<RecentlyAddedResponse> {
-  const res = await fetch(
-    `/api/recently-added?limit=${encodeURIComponent(String(limit))}`
-  );
+  const params = new URLSearchParams({
+    limit: String(limit),
+    ignoreMaxAge: '1',
+  });
+  const res = await fetch(`/api/recently-added?${params.toString()}`);
   const data: unknown = await res.json();
 
   if (!res.ok) {
