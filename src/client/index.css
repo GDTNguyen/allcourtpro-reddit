@@ -1,5 +1,105 @@
 @import 'tailwindcss';
 
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html.devvit-inline,
+html.devvit-inline body,
+html.devvit-inline #root {
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  overscroll-behavior: auto;
+  background-color: #ffffff;
+  color: #111827;
+}
+
+@media (prefers-color-scheme: dark) {
+  html.devvit-inline,
+  html.devvit-inline body,
+  html.devvit-inline #root {
+    background-color: #111827;
+    color: #f9fafb;
+  }
+}
+
+html.devvit-expanded,
+html.devvit-expanded body,
+html.devvit-expanded #root {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.results-app--splash {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: auto;
+  touch-action: pan-y;
+  cursor: pointer;
+  user-select: none;
+  background-color: #ffffff;
+  color: #111827;
+}
+
+@media (prefers-color-scheme: dark) {
+  .results-app--splash {
+    background-color: #111827;
+    color: #f9fafb;
+  }
+}
+
+.results-app--splash .results-app__preview-list,
+.results-app--splash .results-app__preview-list * {
+  pointer-events: none;
+}
+
+.results-app__preview-row {
+  flex: 1 1 0;
+  min-height: 3.5rem;
+}
+
+.results-app__inline-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: end center;
+  padding: 0 1rem 1rem;
+  background: linear-gradient(to top, rgb(15 23 42 / 0.38), transparent 42%);
+  pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .results-app__inline-overlay {
+    background: linear-gradient(to top, rgb(0 0 0 / 0.55), transparent 42%);
+  }
+}
+
+.results-app__inline-cta {
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.dark .results-app__inline-cta {
+  background: rgba(17, 24, 39, 0.96);
+  color: #f9fafb;
+}
+
 @keyframes live-pulse {
   0%,
   100% {

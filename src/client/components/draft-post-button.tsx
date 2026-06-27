@@ -17,7 +17,7 @@ export function DraftPostButton({ result, compact = false }: DraftPostButtonProp
       className={
         compact
           ? 'rounded-full border border-[#d93900]/40 px-2.5 py-0.5 text-xs font-medium text-[#d93900] transition-colors hover:bg-[#d93900]/10 disabled:opacity-50 dark:border-orange-500/40 dark:text-orange-400 dark:hover:bg-orange-500/10'
-          : 'mt-3 rounded-full border border-[#d93900]/40 px-3 py-1.5 text-sm font-medium text-[#d93900] transition-colors hover:bg-[#d93900]/10 disabled:opacity-50 dark:border-orange-500/40 dark:text-orange-400 dark:hover:bg-orange-500/10'
+          : 'rounded-full border border-[#d93900]/40 px-3 py-1.5 text-sm font-medium text-[#d93900] transition-colors hover:bg-[#d93900]/10 disabled:opacity-50 dark:border-orange-500/40 dark:text-orange-400 dark:hover:bg-orange-500/10'
       }
       onClick={() => {
         setBusy(true);

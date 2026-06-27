@@ -4,8 +4,10 @@ import { navigateTo } from '@devvit/web/client';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useRecentlyAdded } from './hooks/useRecentlyAdded';
+import { useDevvitPresentation } from './hooks/useDevvitPresentation';
 import { DataSourceNotice } from './components/data-source-notice';
 import { DraftPostButton } from './components/draft-post-button';
+import { GoogleTournamentSearchButton } from './components/google-tournament-search-button';
 import { LoadMoreButton } from './components/load-more-button';
 import { LiveStatusBar } from './components/live-status-bar';
 import type { RecentlyAddedResult } from '../shared/api';
@@ -55,12 +57,17 @@ function MatchCard({
           No charting comparison available for this match.
         </p>
       )}
-      <DraftPostButton result={result} />
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <GoogleTournamentSearchButton result={result} />
+        <DraftPostButton result={result} />
+      </div>
     </article>
   );
 }
 
 export const App = () => {
+  useDevvitPresentation();
+
   const {
     data,
     loading,
